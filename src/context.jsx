@@ -11,7 +11,7 @@ const UrlProvider = ({ children }) => {
 
     useEffect(() => {
         fetchUser();
-    })
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
         <UrlContext.Provider value={{ user, fetchUser, loading, isAuthenticated }}>

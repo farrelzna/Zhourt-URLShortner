@@ -13,7 +13,7 @@ import { BeatLoader } from 'react-spinners'
 import Error from './error'
 import * as Yup from 'yup'
 import useFetch from '@/hooks/use-fetch'
-import { signin } from '@/db/apiAuth'
+import { login as signin } from '@/db/apiAuth'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { UrlState } from '@/context'
 
