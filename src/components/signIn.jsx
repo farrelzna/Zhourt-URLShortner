@@ -72,29 +72,39 @@ const SignIn = () => {
     }
 
     return (
-        <div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Sign In</CardTitle>
-                    <CardDescription>to your account if you have already one</CardDescription>
-                    {error && <Error message={error.message} />}
-                </CardHeader>
-                <CardContent className="space-y-2">
-                    <div className="space-y-1">
-                        <Input name="email" type="email" placeholder="Enter your email" onChange={handleInputChange} />
-                        {errors.email && <Error message={errors.email} />}
-                    </div>
-                    <div className="space-y-1">
-                        <Input name="password" type="password" placeholder="Enter your password" onChange={handleInputChange} />
-                        {errors.password && <Error message={errors.password} />}
-                    </div>
-                </CardContent>
-                <CardFooter>
-                    <Button onClick={handleSignIn}>
-                        {loading ? <BeatLoader size={8} color="white" /> : "Sign In"}
-                    </Button>
-                </CardFooter>
-            </Card>
+        <div className="space-y-4">
+            {error && <Error message={error.message} />}
+            
+            <div className="space-y-4">
+                <div className="space-y-2">
+                    <Input 
+                        name="email" 
+                        type="email" 
+                        placeholder="Enter your email" 
+                        onChange={handleInputChange}
+                        className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:border-gray-500 dark:focus:border-gray-400"
+                    />
+                    {errors.email && <Error message={errors.email} />}
+                </div>
+                <div className="space-y-2">
+                    <Input 
+                        name="password" 
+                        type="password" 
+                        placeholder="Enter your password" 
+                        onChange={handleInputChange}
+                        className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:border-gray-500 dark:focus:border-gray-400"
+                    />
+                    {errors.password && <Error message={errors.password} />}
+                </div>
+            </div>
+            
+            <Button 
+                onClick={handleSignIn}
+                className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
+                disabled={loading}
+            >
+                {loading ? <BeatLoader size={8} color="currentColor" /> : "Sign In"}
+            </Button>
         </div>
     )
 }

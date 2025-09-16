@@ -1,17 +1,14 @@
-import Header from '@/components/header'
+import Navbar from '@/components/navbar'
 import React from 'react'
 import { Outlet } from 'react-router-dom'
 
 const AppLayout = () => {
   return (
-    <div>
-        <main className='min-h-screen container'>
-            <Header />
+    <div className="relative min-h-screen">
+        <main className='min-h-screen container relative z-10'>
+            <Navbar />
             <Outlet />
         </main>
-        <div className='p-10 text-center text-sm text-gray-500 mt-10'>
-            <p>Made with farelzna</p>
-        </div>
     </div>
   )
 }
