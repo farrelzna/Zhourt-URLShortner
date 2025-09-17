@@ -1,13 +1,16 @@
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+// components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowRight, Link2, BarChart3, Shield, Zap, Star, Github, Twitter, Linkedin, MessageSquare, ChevronUp, ChevronDown } from "lucide-react";
 import Aurora from '@/components/Aurora';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ArrowRight, Link2, BarChart3, Shield, Zap, Star, Github, Twitter, Linkedin, MessageSquare, ChevronUp, ChevronDown } from "lucide-react";
+import ScrollReveal from "@/components/ScrollReveal";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -41,20 +44,20 @@ const LandingPage = () => {
   const toggleContent = () => {
     setIsFirstLoad(false);
     setIsContentVisible(!isContentVisible);
-    
-    // Animate the section position
-    const targetY = isContentVisible ? 0 : -window.innerHeight * 0.5;
-    setDragY(targetY);
 
-    // Enable/disable scrolling on body
-    if (!isContentVisible) {
-      // When opening, enable scroll after animation
+    // Animate the section position
+    if (isContentVisible) {
+      // When closing, always reset to initial position (0)
+      setDragY(0);
+      // Disable scroll immediately
+      document.body.style.overflow = 'hidden';
+    } else {
+      // When opening, move to half screen
+      setDragY(-window.innerHeight * 0.5);
+      // Enable scroll after animation
       setTimeout(() => {
         document.body.style.overflow = 'auto';
       }, 400);
-    } else {
-      // When closing, disable scroll immediately
-      document.body.style.overflow = 'hidden';
     }
   };
 
@@ -66,12 +69,12 @@ const LandingPage = () => {
 
     // Animate toggle button entrance
     if (toggleButtonRef.current) {
-      gsap.fromTo(toggleButtonRef.current, 
+      gsap.fromTo(toggleButtonRef.current,
         { y: 50, opacity: 0, scale: 0.8 },
-        { 
-          y: 0, 
-          opacity: 1, 
-          scale: 1, 
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
           duration: 1,
           delay: 1,
           ease: "back.out(1.7)"
@@ -131,13 +134,13 @@ const LandingPage = () => {
       const container = scrollContainerRef.current;
       const cardsContainer = cardsContainerRef.current;
       if (!container || !cardsContainer) return;
-      
+
       // Horizontal scroll animation
       const cards = cardsContainer.children;
       const cardWidth = 320; // width + gap
       const totalWidth = cardWidth * features.length;
       gsap.set(cardsContainer, { width: totalWidth * 2 });
-      
+
       // Heavy/Slow horizontal scroll trigger
       ScrollTrigger.create({
         trigger: container,
@@ -155,7 +158,7 @@ const LandingPage = () => {
           });
         }
       });
-      
+
       // Add momentum/inertia effect
       ScrollTrigger.create({
         trigger: container,
@@ -171,7 +174,7 @@ const LandingPage = () => {
           });
         }
       });
-      
+
       // Card animations
       gsap.fromTo(cards,
         {
@@ -195,7 +198,7 @@ const LandingPage = () => {
           }
         }
       );
-      
+
       Array.from(cards).forEach((card, index) => {
         gsap.to(card, {
           y: -10,
@@ -271,9 +274,9 @@ const LandingPage = () => {
       section.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
-      section.removeEventListener('touchstart', () => {});
-      window.removeEventListener('touchmove', () => {});
-      window.removeEventListener('touchend', () => {});
+      section.removeEventListener('touchstart', () => { });
+      window.removeEventListener('touchmove', () => { });
+      window.removeEventListener('touchend', () => { });
     };
   }, [dragY, isDragging, isContentVisible]);
 
@@ -319,7 +322,7 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="relative" style={{ minHeight: isContentVisible ? '300vh' : '100vh' }}>
+    <div className="relative" style={{ minHeight: isContentVisible ? '200vh' : '150vh' }}>
       {/* Aurora Background */}
       <div className="fixed inset-0 z-0">
         <Aurora
@@ -404,12 +407,11 @@ const LandingPage = () => {
         </div>
 
         {/* Toggle Button - Position changes based on content state */}
-        <div 
-          className={`fixed left-1/2 transform -translate-x-1/2 z-30 transition-all duration-500 ease-in-out ${
-            isContentVisible 
-              ? 'top-8' // Move to top when content is open
-              : 'bottom-8' // Stay at bottom when content is closed
-          }`}
+        <div
+          className={`fixed left-1/2 transform -translate-x-1/2 z-30 transition-all duration-500 ease-in-out ${isContentVisible
+            ? 'top-8' // Move to top when content is open
+            : 'bottom-8' // Stay at bottom when content is closed
+            }`}
         >
           <button
             ref={toggleButtonRef}
@@ -419,28 +421,26 @@ const LandingPage = () => {
           >
             {/* SVG Icons with smooth rotation transition */}
             <div className="relative w-8 h-8 flex items-center justify-center">
-              <ChevronUp 
-                className={`absolute w-8 h-8 text-white transition-all duration-500 transform ${
-                  isContentVisible 
-                    ? 'opacity-0 rotate-180 scale-75' 
-                    : 'opacity-100 rotate-0 scale-100'
-                } group-hover:scale-110`} 
+              <ChevronUp
+                className={`absolute w-8 h-8 text-white transition-all duration-500 transform ${isContentVisible
+                  ? 'opacity-0 rotate-180 scale-75'
+                  : 'opacity-100 rotate-0 scale-100'
+                  } group-hover:scale-110`}
               />
-              <ChevronDown 
-                className={`absolute w-8 h-8 text-white transition-all duration-500 transform ${
-                  isContentVisible 
-                    ? 'opacity-100 rotate-0 scale-100' 
-                    : 'opacity-0 rotate-180 scale-75'
-                } group-hover:scale-110`} 
+              <ChevronDown
+                className={`absolute w-8 h-8 text-white transition-all duration-500 transform ${isContentVisible
+                  ? 'opacity-100 rotate-0 scale-100'
+                  : 'opacity-0 rotate-180 scale-75'
+                  } group-hover:scale-110`}
               />
             </div>
-            
+
             {/* Enhanced ripple effect */}
             <div className="absolute inset-0 rounded-full bg-white/5 scale-0 group-hover:scale-150 transition-transform duration-500"></div>
-            
+
             {/* Pulsating outer glow */}
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400/20 to-purple-400/20 animate-pulse"></div>
-            
+
             {/* Additional animated ring */}
             <div className="absolute inset-0 rounded-full border-2 border-white/10 scale-100 group-hover:scale-125 transition-transform duration-300"></div>
           </button>
@@ -450,13 +450,11 @@ const LandingPage = () => {
       {/* Main Content Section (draggable, includes features, CTA, and footer) */}
       <section
         ref={el => { scrollContainerRef.current = el; dragSectionRef.current = el; }}
-        className={`absolute top-[150vh] rounded-t-4xl left-0 right-0 pt-30 bg-white dark:bg-gray-900 z-20 overflow-hidden ${
-          isContentVisible ? 'pointer-events-auto' : 'pointer-events-none'
-        }`}
-        style={{ 
-          transform: `translateY(${dragY}px)`, 
-          transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(.22,.68,.43,1.01)',
-          opacity: isContentVisible ? 1 : 0.3,
+        className={`absolute top-[100vh] rounded-t-4xl left-0 right-0 pt-30 bg-white dark:bg-gray-900 z-20 overflow-hidden ${isContentVisible ? 'pointer-events-auto' : 'pointer-events-none'
+          }`}
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: isDragging ? 'none' : 'transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1)',        
           visibility: isFirstLoad && !isContentVisible ? 'hidden' : 'visible'
         }}
         aria-label="Drag to move main content section"
@@ -466,88 +464,108 @@ const LandingPage = () => {
             <h2 className="text-3xl sm:text-4xl font-medium text-gray-900 dark:text-white mb-4">
               Why choose Zhourt?
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
               Built for modern teams and individuals who need reliable, fast, and secure URL shortening
             </p>
-          </div>
-
-          {/* Horizontal Scrolling Cards Container */}
-          <div className="relative w-full h-120 overflow-hidden">
-            <div
-              ref={cardsContainerRef}
-              className="flex gap-8 absolute top-10"
-              style={{ height: '100%' }}
-            >
-              {duplicatedFeatures.map((feature, index) => (
-                <div
-                  key={index}
-                  className="flex-shrink-0 w-80 h-80 perspective-1000"
-                  style={{ transformStyle: 'preserve-3d' }}
+            <div className="text-start px-20 text-black/70 dark:text-gray-300 leading-relaxed">
+              <ScrollReveal
+                baseOpacity={0}
+                enableBlur={true}
+                baseRotation={5}
+                blurStrength={10}
+              >
+                Zhourt is a modern web application for instantly shortening links (URLs) — completely free and unlimited. With Zhourt, you can turn long URLs into short, shareable links and get real-time click analytics. Unlike other services that restrict free features, Zhourt gives you all the essentials with no cost, no ads, and no mandatory registration. Perfect for businesses, creators, and personal use.
+                What makes it different? Zhourt is truly free forever: no monthly limits, no watermarks, no hidden catches. Use it instantly, share your links, and track stats without worrying about fees or privacy. This is the transparent, fast, and user-friendly link shortener for everyone.
+              </ScrollReveal>
+              {/* CTA Section */}
+              <div className="w-full items-center justify-start mb-24">
+                <Button
+                  size="lg"
+                  onClick={() => navigate('/auth')}
+                  className="bg-gradient-to-r bg-black/90 hover:bg-black/80 text-white px-10 py-3 text-sm rounded-sm transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
-                  <Card className="w-full h-full border-none bg-white dark:bg-gray-800 transition-all duration-700 transform hover:scale-105 hover:-translate-y-2 relative overflow-hidden group">
-                    {/* Background Gradient */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-700`}></div>
-
-                    {/* Animated Border */}
-                    <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-transparent via-blue-300 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-pulse"></div>
-
-                    <CardContent className="p-8 text-center h-full flex flex-col justify-center relative z-10">
-                      {/* Icon with 3D effect */}
-                      <div className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center transform transition-all duration-700 group-hover:rotate-y-12 group-hover:scale-110">
-                        <feature.icon className="w-10 h-10 text-gray-700 dark:text-gray-300 transition-all duration-700 group-hover:scale-125" />
-
-                        {/* Icon glow effect */}
-                        <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-700 blur-xl`}></div>
-                      </div>
-
-                      {/* Title with animation */}
-                      <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-4 transition-all duration-700 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600">
-                        {feature.title}
-                      </h3>
-
-                      {/* Description */}
-                      <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed transition-all duration-700 group-hover:text-gray-700 dark:group-hover:text-gray-300">
-                        {feature.description}
-                      </p>
-
-                      {/* Floating particles effect */}
-                      <div className="absolute top-4 right-4 w-2 h-2 bg-blue-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-ping"></div>
-                      <div className="absolute bottom-4 left-4 w-1.5 h-1.5 bg-purple-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-900 animate-pulse"></div>
-                      <div className="absolute top-1/2 left-4 w-1 h-1 bg-cyan-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-800 animate-bounce"></div>
-                    </CardContent>
-                  </Card>
-                </div>
-              ))}
+                  Start for free
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                  No credit card required • Set up in 30 seconds
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* CTA Section */}
-          <div className="w-full items-center justify-start p-8 py-16 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-gray-200 dark:border-gray-700 mt-24">
-            <Button
-              size="lg"
-              onClick={() => navigate('/auth')}
-              className="bg-gradient-to-r bg-gray-900 hover:bg-gray-800 text-white px-10 py-3 text-sm rounded-sm transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              Start for free
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-              No credit card required • Set up in 30 seconds
-            </p>
+          {/* Horizontal Scrolling Cards Container */}
+          <div className="my-24">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl sm:text-4xl font-medium text-gray-900 dark:text-white mb-4">
+                Powerful Features
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
+                Everything you need to shorten, share, and track your links
+              </p>
+            </div>
+            <div className="relative w-full h-120 overflow-hidden">
+              <div
+                ref={cardsContainerRef}
+                className="flex gap-8 absolute top-10"
+                style={{ height: '100%' }}
+              >
+                {duplicatedFeatures.map((feature, index) => (
+                  <div
+                    key={index}
+                    className="flex-shrink-0 w-80 h-80 perspective-1000"
+                    style={{ transformStyle: 'preserve-3d' }}
+                  >
+                    <Card className="w-full h-full border-none shadow-none bg-white transition-all duration-700 transform hover:scale-105 hover:-translate-y-2 relative overflow-hidden group">
+                      {/* Background Gradient */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-700`}></div>
+
+                      {/* Animated Border */}
+                      {/* <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-transparent via-blue-300 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-pulse"></div> */}
+
+                      <CardContent className="p-8 text-center h-full flex flex-col justify-center relative z-10">
+                        {/* Icon with 3D effect */}
+                        <div className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center transform transition-all duration-700 group-hover:rotate-y-12 group-hover:scale-110">
+                          <feature.icon className="w-10 h-10 text-gray-700 dark:text-gray-300 transition-all duration-700 group-hover:scale-125" />
+
+                          {/* Icon glow effect */}
+                          <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-700 blur-xl`}></div>
+                        </div>
+
+                        {/* Title with animation */}
+                        <h3 className="text-xl font-norma;  text-gray-900 dark:text-white mb-4 transition-all duration-700 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600">
+                          {feature.title}
+                        </h3>
+
+                        {/* Description */}
+                        <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed transition-all duration-700 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                          {feature.description}
+                        </p>
+
+                        {/* Floating particles effect */}
+                        <div className="absolute top-4 right-4 w-2 h-2 bg-blue-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-ping"></div>
+                        <div className="absolute bottom-4 left-4 w-1.5 h-1.5 bg-purple-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-900 animate-pulse"></div>
+                        <div className="absolute top-1/2 left-4 w-1 h-1 bg-cyan-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-800 animate-bounce"></div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Footer Section */}
-          <footer id="footer" className="w-full bg-gradient-to-br bg-white dark:from-gray-900 dark:to-gray-800 border-gray-200 dark:border-gray-700 z-30">
+          <footer id="footer" className="w-full bg-black/90 border-gray-200 dark:border-gray-700 rounded-t-2xl z-30 relative overflow-hidden group">
             <div className="mx-auto sm:px-6 lg:px-8 py-16">
               {/* Main Footer Content */}
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 mb-12">
                 {/* Newsletter Section */}
                 <div className="lg:col-span-2">
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-100 dark:border-gray-700 relative overflow-hidden group">
+                  <div className="bg-white rounded-2xl p-8 border border-gray-100 relative overflow-hidden group">
                     {/* Background decoration */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-purple-600/5 rounded-full transform translate-x-8 -translate-y-8"></div>
                     <div className="relative z-10">
-                      <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-3">
+                      <h3 className="text-xl font-medium text-black/90 mb-3">
                         Keep in the loop with the Zhourt® newsletter.
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">
@@ -566,7 +584,7 @@ const LandingPage = () => {
                           <Button
                             type="submit"
                             size="sm"
-                            className="absolute right-2 top-2 h-8 w-8 p-0 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 rounded-lg"
+                            className="absolute right-2 top-2 h-8 w-8 p-0 bg-black/90 hover:bg-black/80 rounded-lg"
                           >
                             <ArrowRight className="w-4 h-4 text-white dark:text-gray-900" />
                           </Button>
@@ -578,10 +596,15 @@ const LandingPage = () => {
                     </div>
                   </div>
                 </div>
+                <div className="absolute bottom-65 -right-20 transform">
+                  <h3 className="text-6xl font-medium  text-white/10 hover:text-white duration-700 -rotate-90 mb-3">
+                    Zhourt.in
+                  </h3>
+                </div>
                 {/* Navigation Links */}
                 {Object.entries(navigationLinks).map(([title, links]) => (
-                  <div key={title}>
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+                  <div key={title} className="">
+                    <h4 className="text-lg font-semibold text-white mb-6">
                       {title}
                     </h4>
                     <ul className="space-y-4">
@@ -589,7 +612,7 @@ const LandingPage = () => {
                         <li key={index}>
                           <a
                             href={link.href}
-                            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200 text-sm font-medium"
+                            className="ext-gray-400 hover:text-gray-300 transition-colors duration-200 text-sm font-medium"
                           >
                             {link.name}
                           </a>
@@ -600,19 +623,19 @@ const LandingPage = () => {
                 ))}
               </div>
               {/* Bottom Section */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
+              <div className="">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                   {/* Copyright and Legal */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm text-white">
                     <p>
                       ©2025 Zhourt – A URL Shortener Product. All rights reserved.
                     </p>
                     <div className="flex gap-4">
-                      <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                      <a href="#" className="hover:text-gray-300 transition-colors duration-200">
                         Privacy Policy
                       </a>
                       <span className="text-gray-300 dark:text-gray-600">•</span>
-                      <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                      <a href="#" className="hover:text-gray-300 transition-colors duration-200">
                         Terms of Use
                       </a>
                     </div>
@@ -624,21 +647,20 @@ const LandingPage = () => {
                         key={index}
                         href={social.href}
                         aria-label={social.label}
-                        className="w-10 h-10 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        className="w-10 h-10 bg-black/80 hover:bg-black/50 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
                       >
-                        <social.icon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <social.icon className="w-5 h-5 text-white" />
                       </a>
                     ))}
                   </div>
                 </div>
               </div>
               {/* Decorative Elements */}
-              <div className="absolute bottom-0 left-1/4 w-64 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-20"></div>
             </div>
           </footer>
         </div>
-      </section>
-    </div>
+      </section >
+    </div >
   );
 };
 

@@ -3,7 +3,7 @@ import {PieChart, Pie, Cell, ResponsiveContainer} from "recharts";
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
 export default function App({stats}) {
-  const deviceCount = stats.reduce((acc, item) => {
+  const deviceCount = (Array.isArray(stats) ? stats : []).reduce((acc, item) => {
     if (!acc[item.device]) {
       acc[item.device] = 0;
     }

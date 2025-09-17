@@ -90,14 +90,15 @@ export function CreateLink() {
       defaultOpen={longLink}
       onOpenChange={(res) => {
         if (!res) setSearchParams({});
-      }}
+      }} 
+      className="backdrop-blur-2xl"
     >
       <DialogTrigger asChild>
-        <Button variant="destructive">Create New Link</Button>
+        <Button className="bg-black/90 text-white hover:bg-black/50">Create New Link</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md border-none">
         <DialogHeader>
-          <DialogTitle className="font-bold text-2xl">Create New</DialogTitle>
+          <DialogTitle className="text-2xl">Create New</DialogTitle>
         </DialogHeader>
         {formValues?.longUrl && (
           <QRCode ref={ref} size={250} value={formValues?.longUrl} />
@@ -107,9 +108,9 @@ export function CreateLink() {
           id="title"
           placeholder="Short Link's Title"
           value={formValues.title}
-          onChange={handleChange}
-        />
-        {errors.title && <Error message={errors.title} />}
+          onChange={handleChange}                     
+          />
+          {errors.title && <Error message={errors.title} />}
         <Input
           id="longUrl"
           placeholder="Enter your Loooong URL"
@@ -129,10 +130,10 @@ export function CreateLink() {
         {error && <Error message={errors.message} />}
         <DialogFooter className="sm:justify-start">
           <Button
-            type="button"
-            variant="destructive"
+            type="button"            
             onClick={createNewLink}
             disabled={loading}
+            className="bg-white border border-white text-black/90 hover:bg-black/59 hover:text-white hover:border-white/20"
           >
             {loading ? <BeatLoader size={10} color="white" /> : "Create"}
           </Button>

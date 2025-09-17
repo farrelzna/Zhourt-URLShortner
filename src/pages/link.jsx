@@ -1,50 +1,54 @@
+import { useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { BarLoader, BeatLoader } from "react-spinners";
+import { LinkIcon, Copy, Download, Trash, ExternalLink, Calendar, BarChart3, MapPin, Smartphone, Star, ArrowLeft } from "lucide-react";
+import { gsap } from 'gsap';
+
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+
 import { UrlState } from "@/context";
 import { getClicksForUrl } from "@/db/apiClicks";
 import { deleteUrls, getUrl } from "@/db/apiUrls";
-import usFetch from "@/hooks/use-fetch";
-import { LinkIcon, Copy, Download, Trash, ExternalLink, Calendar, BarChart3, MapPin, Smartphone } from "lucide-react";
-import { useEffect } from "react";
 import useFetch from "@/hooks/use-fetch";
-import { useNavigate, useParams } from "react-router-dom"
-import { BarLoader, BeatLoader } from "react-spinners";
 import Location from '@/components/location-stats';
 import DeviceStat from '@/components/device-stats';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import Aurora from '@/components/Aurora';
+import { useAlertManager, AlertContainer } from '@/components/AlertNotification';
 
 const Link = () => {
-  const downloadImage = () => {
-    const imageUrl = url?.qr;
-    const fileName = url?.title;
-
-    const anchor = document.createElement('a');
-    anchor.href = imageUrl;
-    anchor.download = fileName;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-  }
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(`https://zhourt.in/${link}`);
-  }
-
   const { id } = useParams();
   const { user } = UrlState();
   const navigate = useNavigate();
+
+  const headerRef = useRef(null);
+  const mainCardRef = useRef(null);
+  const statsRef = useRef(null);
+  const qrRef = useRef(null);
+
+  // Alert Manager
+  const { alerts, showAlert, showCustomAlert, removeAlert } = useAlertManager();
 
   const {
     loading,
     data: url,
     fn,
     error,
-  } = usFetch(getUrl, { id, user_id: user?.id });
+  } = useFetch(getUrl, { id, user_id: user?.id });
 
   const {
     loading: loadingStats,
@@ -59,251 +63,410 @@ const Link = () => {
     fnStats();
   }, []);
 
+  // Animate on load
+  useEffect(() => {
+    const tl = gsap.timeline();
+
+    if (headerRef.current) {
+      tl.fromTo(headerRef.current.children,
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, stagger: 0.1, ease: "power3.out" }
+      );
+    }
+
+    if (mainCardRef.current) {
+      tl.fromTo(mainCardRef.current,
+        { y: 40, opacity: 0, scale: 0.98 },
+        { y: 0, opacity: 1, scale: 1, duration: 1, ease: "back.out(1.2)" },
+        "-=0.6"
+      );
+    }
+
+    if (statsRef.current && qrRef.current) {
+      tl.fromTo([statsRef.current, qrRef.current],
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, stagger: 0.2, ease: "power3.out" },
+        "-=0.4"
+      );
+    }
+
+    return () => tl.kill();
+  }, [url]);
+
   if (error) {
     navigate("/dashboard");
   }
 
   let link = "";
   if (url) {
-    link = url?.custom_url ? url?.custom_url : url.short_url
+    link = url?.custom_url ? url?.custom_url : url.short_url;
   }
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Loading Bar */}
-      {(loading || loadingStats) && (
-        <div className="mb-6">
-          <BarLoader width={"100%"} color="rgb(107 114 128)" />
-        </div>
-      )}
+  const downloadImage = () => {
+    try {
+      const imageUrl = url?.qr;
+      const fileName = url?.title;
 
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-          >
-            ← Back to Dashboard
-          </Button>
-        </div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Link Details
-        </h1>
+      if (!imageUrl) {
+        showAlert('downloadError');
+        return;
+      }
+
+      const anchor = document.createElement('a');
+      anchor.href = imageUrl;
+      anchor.download = fileName || 'qr-code';
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+
+      showAlert('downloadSuccess');
+    } catch (error) {
+      showAlert('downloadError');
+    }
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(`https://zhourt.in/${link}`);
+      showAlert('copySuccess');
+    } catch (error) {
+      showAlert('copyError');
+    }
+  };
+
+  const handleDelete = () => {
+    // Show confirmation alert first
+    showCustomAlert({
+      type: 'warning',
+      title: 'Confirm Deletion',
+      description: 'This action cannot be undone. Are you sure you want to delete this link?',
+      icon: Trash,
+      autoClose: false,
+      duration: 0,
+      onConfirm: () => {
+        fnDelete().then(() => {
+          showAlert('deleteSuccess');
+          setTimeout(() => navigate('/dashboard'), 1500);
+        }).catch(() => {
+          showAlert('deleteError');
+        });
+      }
+    });
+  };
+
+  const isLoading = loading || loadingStats;
+
+  return (
+    <div className="relative min-h-screen">
+      {/* Aurora Background */}
+      <div className="fixed inset-0 z-0">
+        <Aurora
+          colorStops={["#3A29FF", "#FF94B4", "#FF3232"]}
+          blend={0.3}
+          amplitude={0.8}
+          speed={0.3}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Link Information */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Main Link Card */}
-          <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    {url?.title}
-                  </CardTitle>
-                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    <Calendar className="w-4 h-4" />
-                    Created {new Date(url?.created_at).toLocaleDateString()}
+      {/* Main Content */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Loading Bar */}
+        {isLoading && (
+          <div className="fixed top-0 left-0 right-0 z-50">
+            <BarLoader width="100%" color="#ffffff" />
+          </div>
+        )}
+
+        {/* Header */}
+        <header ref={headerRef} className="mb-12">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
+            <div className="flex-1">
+
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-transparent border-none text-white hover:bg-white/20"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Dashboard
+                </Button>
+              </div>
+
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-normal font-mono text-white my-4">
+                <span className="bg-black relative inline-block px-4 py-2 rounded">
+                  {url?.title || 'Link Details'}
+                </span>
+              </h1>
+
+              <p className="text-sm text-white/80 max-w-2xl">
+                Detailed analytics and management for your shortened URL
+              </p>
+            </div>
+
+            {/* Breadcrumb */}
+            <div className="flex-shrink-0">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/" className="text-white/80 hover:text-white transition-colors">
+                      Home
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="text-white/60" />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/dashboard" className="text-white/80 hover:text-white transition-colors">
+                      Dashboard
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="text-white/60" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="text-white font-medium">
+                      Link Details
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Link Information */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Main Link Card */}
+            <Card ref={mainCardRef} className="border-none bg-trasparent backdrop-blur-2xl">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-2xl text-white mb-3">
+                      {url?.title}
+                    </CardTitle>
+                    <div className="flex items-center gap-2 text-xs text-white/70">
+                      <Calendar className="w-4 h-4" />
+                      Created {new Date(url?.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                    Active
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Short URL */}
+                <div className="space-y-3">
+                  <label className="text-sm text-white/90">
+                    Short URL
+                  </label>
+                  <div className="flex items-center gap-3 p-4 mt-2 bg-white/5 border-none rounded-sm backdrop-blur-sm">
+                    <a
+                      href={`https://zhourt.in/${link}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                    >
+                      https://zhourt.in/{link}
+                    </a>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={copyToClipboard}
+                      className="h-8 w-8 p-0 text-white/70 hover:text-white hover:bg-white/20"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
-                <Badge variant="secondary" className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-0">
-                  Active
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Short URL */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Short URL
-                </label>
-                <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <a
-                    href={`https://zhourt.in/${link}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                  >
-                    https://zhourt.in/{link}
-                  </a>
+
+                {/* Original URL */}
+                <div className="space-y-3">
+                  <label className="text-sm text-white/90">
+                    Original URL
+                  </label>
+                  <div className="flex items-center gap-3 p-4 mt-2 bg-white/5 border-none rounded-sm backdrop-blur-sm">
+                    <LinkIcon className="w-4 h-4 text-white/60 flex-shrink-0" />
+                    <a
+                      href={url?.original_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 text-white/80 hover:text-white truncate transition-colors"
+                    >
+                      {url?.original_url}
+                    </a>
+                    <a href={url?.original_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4 text-white/60 flex-shrink-0" /></a>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-6">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={copyToClipboard}
-                    className="h-8 w-8 p-0"
+                    className="flex items-center gap-2 p-4 bg-transparent border-none text-white hover:bg-transparent hover:text-gray-400"
                   >
                     <Copy className="w-4 h-4" />
+                    Copy Link
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadImage}
+                    className="flex items-center gap-2 p-4 bg-transparent border-none text-white hover:bg-transparent hover:text-blue-400"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download QR
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete()}
+                    disabled={loadingDelete}
+                    className="flex items-center gap-2 bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30 hover:text-red-300"
+                  >
+                    {loadingDelete ? (
+                      <BeatLoader color="currentColor" size={12} />
+                    ) : (
+                      <Trash className="w-4 h-4" />
+                    )}
+                    Delete
                   </Button>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Original URL */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Original URL
-                </label>
-                <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <LinkIcon className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                  <a
-                    href={url?.original_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white truncate"
+            {/* Statistics */}
+            <Card ref={statsRef} className="border-none bg-transparent backdrop-blur-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl font-semibold text-white">
+                  <BarChart3 className="w-5 h-5" />
+                  Analytics Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {stats && stats?.length ? (
+                  <div className="space-y-8">
+                    {/* Total Clicks */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                      <div className="text-center p-6 bg-white/5 border border-white/20 rounded-xl backdrop-blur-sm">
+                        <div className="text-3xl font-bold text-white mb-2">
+                          {stats?.length}
+                        </div>
+                        <div className="text-sm text-white/70">
+                          Total Clicks
+                        </div>
+                      </div>
+                      <div className="text-center p-6 bg-white/5 border border-white/20 rounded-xl backdrop-blur-sm">
+                        <div className="text-3xl font-bold text-white mb-2">
+                          {new Set(stats?.map(stat => stat.ip)).size}
+                        </div>
+                        <div className="text-sm text-white/70">
+                          Unique Visitors
+                        </div>
+                      </div>
+                      <div className="text-center p-6 bg-white/5 border border-white/20 rounded-xl backdrop-blur-sm">
+                        <div className="text-3xl font-bold text-white mb-2">
+                          {Math.round((stats?.length / Math.max(1, Math.ceil((new Date() - new Date(url?.created_at)) / (1000 * 60 * 60 * 24)))) * 100) / 100}
+                        </div>
+                        <div className="text-sm text-white/70">
+                          Avg Daily Clicks
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-8 justify-between">
+                      {/* Location Data */}
+                      <div className="space-y-4 w-full">
+                        <h4 className="flex items-center gap-2 text-lg font-medium text-white">
+                          <MapPin className="w-5 h-5" />
+                          Location Analytics
+                        </h4>
+                        <div className="bg-white/5 border border-white/20 rounded-xl p-6">
+                          <Location stats={stats} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="relative mb-6">
+                      <BarChart3 className="w-16 h-16 text-white/40 mx-auto" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-2xl" />
+                    </div>
+                    <h3 className="text-xl font-medium text-white mb-3">
+                      {loadingStats ? "Loading analytics..." : "No clicks yet"}
+                    </h3>
+                    <p className="text-white/70 leading-relaxed">
+                      Share your link to start collecting analytical data and insights
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* QR Code */}
+          <div className="lg:col-span-1 flex flex-col gap-8">
+            <Card ref={qrRef} className="border border-none bg-transparent backdrop-blur-2xl">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-white">
+                  QR Code
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-19">
+                <div className="flex flex-col items-center">
+                  <div className="relative mb-6">
+                    <img
+                      src={url?.qr}
+                      alt="QR Code"
+                      className="w-48 h-48 object-contain bg-white rounded-xl p-4 border border-white/20"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-purple-400/10 rounded-xl blur-xl -z-10" />
+                  </div>
+
+                  <p className="text-sm text-white/70 mb-6 text-center leading-relaxed">
+                    Scan this QR code to instantly visit your shortened URL from any mobile device
+                  </p>
+
+                  <Button
+                    onClick={downloadImage}
+                    className="w-full bg-white/10 border border-white/30 text-white hover:bg-white/20 hover:text-white backdrop-blur-sm"
                   >
-                    {url?.original_url}
-                  </a>
-                  <ExternalLink className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                    <Download className="w-4 h-4 mr-2" />
+                    Download QR Code
+                  </Button>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Actions */}
-              <div className="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={copyToClipboard}
-                  className="flex items-center gap-2"
-                >
-                  <Copy className="w-4 h-4" />
-                  Copy Link
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={downloadImage}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Download QR
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fnDelete()}
-                  disabled={loadingDelete}
-                  className="flex items-center gap-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                >
-                  {loadingDelete ? (
-                    <BeatLoader color="currentColor" size={12} />
-                  ) : (
-                    <Trash className="w-4 h-4" />
-                  )}
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Statistics */}
-          <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white">
-                <BarChart3 className="w-5 h-5" />
-                Analytics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {stats && stats?.length ? (
-                <div className="space-y-6">
-                  {/* Total Clicks */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {stats?.length}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Total Clicks
-                      </div>
-                    </div>
-                    <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {new Set(stats?.map(stat => stat.ip)).size}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Unique Visitors
-                      </div>
-                    </div>
-                    <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {Math.round((stats?.length / Math.max(1, Math.ceil((new Date() - new Date(url?.created_at)) / (1000 * 60 * 60 * 24)))) * 100) / 100}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Avg Daily Clicks
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Location Data */}
-                  <div>
-                    <h4 className="flex items-center gap-2 text-lg font-medium text-gray-900 dark:text-white mb-4">
-                      <MapPin className="w-4 h-4" />
-                      Location Analytics
-                    </h4>
-                    <Location stats={stats} />
-                  </div>
-
-                  {/* Device Info */}
-                  <div>
-                    <h4 className="flex items-center gap-2 text-lg font-medium text-gray-900 dark:text-white mb-4">
-                      <Smartphone className="w-4 h-4" />
-                      Device Analytics
-                    </h4>
+            <Card className="border border-none bg-transparent backdrop-blur-xl">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-white">
+                  <Smartphone className="w-5 h-5" />
+                  Device Analytics
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-19">
+                <div className="">
+                  <div className="bg-white/5 border border-white/20 rounded-xl p-6">
                     <DeviceStat stats={stats} />
                   </div>
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {loadingStats ? "Loading analytics..." : "No clicks yet"}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                    Share your link to start collecting data
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* QR Code */}
-        <div className="lg:col-span-1">
-          <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-                QR Code
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center">
-                <img
-                  src={url?.qr}
-                  alt="QR Code"
-                  className="w-48 h-48 object-contain bg-white rounded-lg p-2 border border-gray-200 dark:border-gray-600"
-                />
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 text-center">
-                  Scan to visit your shortened URL
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={downloadImage}
-                  className="mt-3 w-full"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download QR Code
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Alert Container */}
+        <AlertContainer
+          alerts={alerts}
+          onRemoveAlert={removeAlert}
+          position="top-right"
+        />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Link
+export default Link;
