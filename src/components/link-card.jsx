@@ -30,14 +30,14 @@ const LinkCard = ({ url, fetchUrls }) => {
             <Link to={`/link/${url?.id}`} className='flex flex-col flex-1'>
                 <span className='text-3xl hover:underline cursor-pointer'>{url?.title}</span>
                 <span className='text-3xl text-blue-500 hover:underline cursor-pointer'>
-                    https://zhourt.in/{url?.custom_url ? url?.custom_url : url.short_url}
+                    https://zhourt/{url?.custom_url ? url?.custom_url : url.short_url}
                 </span>
                 <span className='flex items-center gap-1 hover:underline cursor-pointer'>{url.original_url}</span>
                 <span className='fkex items-end font-extralight text-sm flex-1'>{new Date(url.created_at).toLocaleString()}</span>
             </Link>
 
             <div className='flex gap-2'>
-                <Button variant={"ghost"} onClick={() => navigator.clipboard.writeText(`https://zhourt.in/${url?.short_url}`)}><Copy /></Button>
+                <Button variant={"ghost"} onClick={() => navigator.clipboard.writeText(`https://zhourt/${url?.short_url}`)}><Copy /></Button>
                 <Button variant={"ghost"} onClick={downloadImage}><Download /></Button>
                 <Button variant={"ghost"} onClick={() => fnDelete().then(() => fetchUrls())}>
                     {loadingDelete ? <BeatLoader  color="#FF0000" size={5} /> : <Trash />}

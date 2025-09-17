@@ -245,7 +245,7 @@ const AlertDemo = () => {
 
   const handleCopyLink = () => {
     // Simulate copy action
-    navigator.clipboard.writeText('https://zhourt.in/abc123')
+    navigator.clipboard.writeText('https://zhourt/abc123')
       .then(() => showAlert('copySuccess'))
       .catch(() => showAlert('copyError'));
   };

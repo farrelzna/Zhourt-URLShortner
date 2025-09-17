@@ -598,7 +598,7 @@ const LandingPage = () => {
                 </div>
                 <div className="absolute bottom-65 -right-20 transform">
                   <h3 className="text-6xl font-medium  text-white/10 hover:text-white duration-700 -rotate-90 mb-3">
-                    Zhourt.in
+                    ZhourtUrl
                   </h3>
                 </div>
                 {/* Navigation Links */}

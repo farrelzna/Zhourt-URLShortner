@@ -127,7 +127,7 @@ const Link = () => {
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(`https://zhourt.in/${link}`);
+      await navigator.clipboard.writeText(`https://zhourt/${link}`);
       showAlert('copySuccess');
     } catch (error) {
       showAlert('copyError');
@@ -261,12 +261,12 @@ const Link = () => {
                   </label>
                   <div className="flex items-center gap-3 p-4 mt-2 bg-white/5 border-none rounded-sm backdrop-blur-sm">
                     <a
-                      href={`https://zhourt.in/${link}`}
+                      href={`https://zhourt/${link}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 text-blue-400 hover:text-blue-300 font-medium transition-colors"
                     >
-                      https://zhourt.in/{link}
+                      https://zhourt/{link}
                     </a>
                     <Button
                       variant="ghost"
