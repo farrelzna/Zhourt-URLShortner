@@ -27,7 +27,7 @@ const Navbar = () => {
   return (
     <>
       {/* Toggle Button */}
-      <div className="fixed right-4 top-4 z-50">
+      <div className="absolute right-4 top-4 z-50">
         <Button
           onClick={toggleSidebar}
           className={`w-12 h-12 rounded-full bg-transparent hover:bg-transparent backdrop-blur-xl shadow-none transition-all duration-300 ${

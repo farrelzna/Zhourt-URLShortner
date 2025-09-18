@@ -18,8 +18,8 @@ import { Button } from '@/components/ui/button';
 const alertConfig = {
   success: {
     icon: CheckCircle,
-    className: "border-green-500/20 bg-green-500/10 text-green-400",
-    iconColor: "text-green-400"
+    className: "border-none bg-black text-white",
+    iconColor: "text-white"
   },
   error: {
     icon: XCircle,
@@ -28,8 +28,8 @@ const alertConfig = {
   },
   warning: {
     icon: AlertTriangle,
-    className: "border-yellow-500/20 bg-yellow-500/10 text-yellow-400",
-    iconColor: "text-yellow-400"
+    className: "border-none bg-black text-white",
+    iconColor: "text-white"
   },
   info: {
     icon: Info,
@@ -213,7 +213,7 @@ const useAlertManager = () => {
 // Alert Container Component
 const AlertContainer = ({ alerts, onRemoveAlert, position = "top-right" }) => {
   const positionClasses = {
-    "top-right": "fixed top-4 right-4 z-50",
+    "top-right": "fixed top-4 right-18 z-50",
     "top-left": "fixed top-4 left-4 z-50",
     "bottom-right": "fixed bottom-4 right-4 z-50",
     "bottom-left": "fixed bottom-4 left-4 z-50",

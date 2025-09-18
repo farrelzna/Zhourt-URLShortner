@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BarLoader, BeatLoader } from "react-spinners";
 import { LinkIcon, Copy, Download, Trash, ExternalLink, Calendar, BarChart3, MapPin, Smartphone, Star, ArrowLeft } from "lucide-react";
@@ -20,6 +20,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 import { UrlState } from "@/context";
 import { getClicksForUrl } from "@/db/apiClicks";
@@ -41,7 +42,7 @@ const Link = () => {
   const qrRef = useRef(null);
 
   // Alert Manager
-  const { alerts, showAlert, showCustomAlert, removeAlert } = useAlertManager();
+  const { alerts, showAlert, removeAlert } = useAlertManager();
 
   const {
     loading,
@@ -57,6 +58,8 @@ const Link = () => {
   } = useFetch(getClicksForUrl, id);
 
   const { loading: loadingDelete, fn: fnDelete } = useFetch(deleteUrls, id);
+
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
   useEffect(() => {
     fn();
@@ -135,22 +138,16 @@ const Link = () => {
   };
 
   const handleDelete = () => {
-    // Show confirmation alert first
-    showCustomAlert({
-      type: 'warning',
-      title: 'Confirm Deletion',
-      description: 'This action cannot be undone. Are you sure you want to delete this link?',
-      icon: Trash,
-      autoClose: false,
-      duration: 0,
-      onConfirm: () => {
-        fnDelete().then(() => {
-          showAlert('deleteSuccess');
-          setTimeout(() => navigate('/dashboard'), 1500);
-        }).catch(() => {
-          showAlert('deleteError');
-        });
-      }
+    setOpenDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    setOpenDeleteDialog(false);
+    fnDelete().then(() => {
+      showAlert('deleteSuccess');
+      setTimeout(() => navigate('/dashboard'), 1500);
+    }).catch(() => {
+      showAlert('deleteError');
     });
   };
 
@@ -243,7 +240,7 @@ const Link = () => {
                     <CardTitle className="text-2xl text-white mb-3">
                       {url?.title}
                     </CardTitle>
-                    <div className="flex items-center gap-2 text-xs text-white/70">
+                    <div className="flex items-center gap-2 text-xs font-mono text-white/70">
                       <Calendar className="w-4 h-4" />
                       Created {new Date(url?.created_at).toLocaleDateString()}
                     </div>
@@ -256,7 +253,7 @@ const Link = () => {
               <CardContent className="space-y-6">
                 {/* Short URL */}
                 <div className="space-y-3">
-                  <label className="text-sm text-white/90">
+                  <label className="text-sm font-mono text-white/90">
                     Short URL
                   </label>
                   <div className="flex items-center gap-3 p-4 mt-2 bg-white/5 border-none rounded-sm backdrop-blur-sm">
@@ -281,7 +278,7 @@ const Link = () => {
 
                 {/* Original URL */}
                 <div className="space-y-3">
-                  <label className="text-sm text-white/90">
+                  <label className="text-sm font-mono text-white/90">
                     Original URL
                   </label>
                   <div className="flex items-center gap-3 p-4 mt-2 bg-white/5 border-none rounded-sm backdrop-blur-sm">
@@ -318,10 +315,11 @@ const Link = () => {
                     <Download className="w-4 h-4" />
                     Download QR
                   </Button>
+                  {/* Button Delete */}
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDelete()}
+                    onClick={handleDelete}
                     disabled={loadingDelete}
                     className="flex items-center gap-2 bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30 hover:text-red-300"
                   >
@@ -348,28 +346,28 @@ const Link = () => {
                 {stats && stats?.length ? (
                   <div className="space-y-8">
                     {/* Total Clicks */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                      <div className="text-center p-6 bg-white/5 border border-white/20 rounded-xl backdrop-blur-sm">
-                        <div className="text-3xl font-bold text-white mb-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="p-4 bg-transparent border border-white/20 rounded-xl backdrop-blur-sm">
+                        <div className="text-4xl font-mono font-normal text-white mb-2">
                           {stats?.length}
                         </div>
-                        <div className="text-sm text-white/70">
+                        <div className="text-sm text-white/70 font-mono">
                           Total Clicks
                         </div>
                       </div>
-                      <div className="text-center p-6 bg-white/5 border border-white/20 rounded-xl backdrop-blur-sm">
-                        <div className="text-3xl font-bold text-white mb-2">
+                      <div className="p-4 bg-transparent border border-white/20 rounded-xl backdrop-blur-sm">
+                        <div className="text-4xl font-mono font-normal text-white mb-2">
                           {new Set(stats?.map(stat => stat.ip)).size}
                         </div>
-                        <div className="text-sm text-white/70">
+                        <div className="text-sm text-white/70 font-mono">
                           Unique Visitors
                         </div>
                       </div>
-                      <div className="text-center p-6 bg-white/5 border border-white/20 rounded-xl backdrop-blur-sm">
-                        <div className="text-3xl font-bold text-white mb-2">
+                      <div className="p-4 bg-transparent border border-white/20 rounded-xl backdrop-blur-sm">
+                        <div className="text-4xl font-mono font-normal text-white mb-2">
                           {Math.round((stats?.length / Math.max(1, Math.ceil((new Date() - new Date(url?.created_at)) / (1000 * 60 * 60 * 24)))) * 100) / 100}
                         </div>
-                        <div className="text-sm text-white/70">
+                        <div className="text-sm text-white/70 font-mono">
                           Avg Daily Clicks
                         </div>
                       </div>
@@ -382,7 +380,7 @@ const Link = () => {
                           <MapPin className="w-5 h-5" />
                           Location Analytics
                         </h4>
-                        <div className="bg-white/5 border border-white/20 rounded-xl p-6">
+                        <div className="bg-transparent border border-white/20 rounded-xl p-6">
                           <Location stats={stats} />
                         </div>
                       </div>
@@ -425,7 +423,7 @@ const Link = () => {
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-purple-400/10 rounded-xl blur-xl -z-10" />
                   </div>
 
-                  <p className="text-sm text-white/70 mb-6 text-center leading-relaxed">
+                  <p className="text-xs text-white/70 mb-6 font-mono text-center leading-relaxed">
                     Scan this QR code to instantly visit your shortened URL from any mobile device
                   </p>
 
@@ -442,14 +440,14 @@ const Link = () => {
 
             <Card className="border border-none bg-transparent backdrop-blur-xl">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-white">
+                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
                   <Smartphone className="w-5 h-5" />
                   Device Analytics
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-19">
                 <div className="">
-                  <div className="bg-white/5 border border-white/20 rounded-xl p-6">
+                  <div className="bg-transparent rounded-xl p-2">
                     <DeviceStat stats={stats} />
                   </div>
                 </div>
@@ -457,6 +455,38 @@ const Link = () => {
             </Card>
           </div>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+          <DialogContent className="max-w-md border-none bg-black/40 backdrop-blur-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-white">
+                <Trash className="w-5 h-5" />
+                Confirm Deletion
+              </DialogTitle>
+            </DialogHeader>
+            <div className="text-sm max-w-xs text-white mb-12">
+              This action cannot be undone. Are you sure you want to delete this link?
+            </div>
+            <DialogFooter className="flex gap-3 justify-end border-t pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setOpenDeleteDialog(false)}
+                className="border-gray-300 text-white"
+              >
+                No
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDelete}
+                disabled={loadingDelete}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                {loadingDelete ? <BeatLoader color="#fff" size={10} /> : "Yes, Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Alert Container */}
         <AlertContainer

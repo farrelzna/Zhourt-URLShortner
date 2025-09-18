@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { BarLoader } from "react-spinners";
-import { Link2, TrendingUp, Search, BarChart3, Star } from "lucide-react";
+import { Link2, TrendingUp, Search, BarChart3, Star, Smartphone, ExternalLink } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ import {
 import LinkCard from "@/components/link-card";
 import Error from "@/components/error";
 import Aurora from '@/components/Aurora';
+import { AlertContainer } from '@/components/AlertNotification';
 
 import useFetch from "@/hooks/use-fetch";
 
@@ -40,6 +41,7 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5); // Configurable items per page
+  const [alerts, setAlerts] = useState([]);
 
   const { user } = UrlState();
   const { loading, error, data: urls, fn: fnUrls } = useFetch(getUrls, user?.id);
@@ -178,6 +180,39 @@ const Dashboard = () => {
 
   const isLoading = loading || loadingClicks;
 
+  // Helper: Get top links in last 7 days
+  const getTopLinksThisWeek = () => {
+    if (!urls || !clicks) return [];
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Filter clicks in last 7 days
+    const recentClicks = clicks.filter(
+      (c) => new Date(c.created_at) >= sevenDaysAgo
+    );
+
+    // Count clicks per url
+    const clickCountMap = {};
+    recentClicks.forEach((c) => {
+      clickCountMap[c.url_id] = (clickCountMap[c.url_id] || 0) + 1;
+    });
+
+    // Map urls with their click count
+    const urlWithClicks = urls.map((url) => ({
+      ...url,
+      clicks: clickCountMap[url.id] || 0,
+    }));
+
+    // Sort by clicks desc, ambil top 5
+    return urlWithClicks
+      .sort((a, b) => b.clicks - a.clicks)
+      .slice(0, 5);
+  };
+
+  const topLinks = getTopLinksThisWeek();
+
+  const removeAlert = (id) => setAlerts((prev) => prev.filter(a => a.id !== id));
+
   return (
     <div className="relative min-h-screen">
       {/* Aurora Background */}
@@ -203,7 +238,7 @@ const Dashboard = () => {
         <header className="">
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
             <div ref={headerRef} className="flex-1">
-              <Badge variant="secondary" className="mb-4 bg-white/20 backdrop-blur-xl text-gray-300 border-0">                
+              <Badge variant="secondary" className="mb-4 bg-white/20 backdrop-blur-xl text-gray-300 border-0">
                 Welcome back, {user?.user_metadata?.name || user?.email || 'User'}
               </Badge>
 
@@ -284,144 +319,193 @@ const Dashboard = () => {
             </p>
           </div>
 
-          <Card className="border-none bg-transparent backdrop-blur-2xl">
-            <CardContent className="p-6 lg:p-8">
-              {/* Search and Actions Bar */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/50" />
-                  <Input
-                    type="text"
-                    placeholder="Search your links..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 h-12 bg-white/5 border border-white/30 text-white placeholder:text-white/50 focus:bg-white/10 focus:border-white/50 backdrop-blur-sm rounded-xl transition-all duration-300"
-                  />
-                </div>
-                <div className="flex-shrink-0">
-                  <CreateLink />
-                </div>
-              </div>
-
-              {/* Error Display */}
-              {error && (
-                <div className="mb-6">
-                  <Error message={error?.message || 'An error occurred while loading your links'} />
-                </div>
-              )}
-
-              {/* Links List with Pagination */}
-              <div className="space-y-6">
-                {isLoading ? (
-                  <div className="flex justify-center items-center py-16">
-                    <div className="text-white/60">Loading your links...</div>
+          <div className="flex gap-8">
+            <Card className="border-none bg-transparent backdrop-blur-2xl w-7xl">
+              <CardContent className="p-6 lg:p-8">
+                {/* Search and Actions Bar */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/50" />
+                    <Input
+                      type="text"
+                      placeholder="Search your links..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-12 h-12 bg-white/5 border border-white/30 text-white placeholder:text-white/50 focus:bg-white/10 focus:border-white/50 backdrop-blur-sm rounded-xl transition-all duration-300"
+                    />
                   </div>
-                ) : currentUrls && currentUrls.length > 0 ? (
-                  <>
-                    {/* Results Summary */}
-                    <div className="flex justify-between items-center text-sm text-white/70 mb-6">
-                      <div>
-                        {searchQuery ? (
-                          `Found ${totalItems} link${totalItems !== 1 ? 's' : ''} matching "${searchQuery}"`
-                        ) : (
-                          `Showing ${startIndex + 1}-${Math.min(endIndex, totalItems)} of ${totalItems} link${totalItems !== 1 ? 's' : ''}`
-                        )}
-                      </div>
-                      <div>
-                        Page {currentPage} of {totalPages}
-                      </div>
-                    </div>
+                  <div className="flex-shrink-0">
+                    <CreateLink />
+                  </div>
+                </div>
 
-                    {/* Links Grid */}
-                    <div className="space-y-4">
-                      {currentUrls.map((url, i) => (
-                        <div
-                          key={url.id || i}
-                          className="transform transition-all duration-300 hover:scale-[1.01]"
-                          style={{ animationDelay: `${i * 0.1}s` }}
-                        >
-                          <LinkCard url={url} fetchUrls={fnUrls} />
+                {/* Error Display */}
+                {error && (
+                  <div className="mb-6">
+                    <Error message={error?.message || 'An error occurred while loading your links'} />
+                  </div>
+                )}
+
+                {/* Links List with Pagination */}
+                <div className="space-y-6">
+                  {isLoading ? (
+                    <div className="flex justify-center items-center py-16">
+                      <div className="text-white/60">Loading your links...</div>
+                    </div>
+                  ) : currentUrls && currentUrls.length > 0 ? (
+                    <>
+                      {/* Links Grid */}
+                      <div className="space-y-4">
+                        {currentUrls.map((url, i) => (
+                          <div
+                            key={url.id || i}
+                            className="transform transition-all duration-300 hover:scale-[1.01]"
+                            style={{ animationDelay: `${i * 0.1}s` }}
+                          >
+                            <LinkCard url={url} fetchUrls={fnUrls} />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Results Summary */}
+                      <div className="flex justify-between items-center text-sm text-white/70 mb-6">
+                        <div>
+                          {searchQuery ? (
+                            `Found ${totalItems} link${totalItems !== 1 ? 's' : ''} matching "${searchQuery}"`
+                          ) : (
+                            `Showing ${startIndex + 1}-${Math.min(endIndex, totalItems)} of ${totalItems} link${totalItems !== 1 ? 's' : ''}`
+                          )}
                         </div>
-                      ))}
-                    </div>
+                        <div>
+                          Page {currentPage} of {totalPages}
+                        </div>
+                      </div>
 
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                      <div className="flex justify-center pt-8">
-                        <Pagination>
-                          <PaginationContent>
-                            <PaginationItem>
-                              <PaginationPrevious
-                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                className={`cursor-pointer bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
-                                  }`}
+                      {/* Pagination Controls */}
+                      {totalPages > 1 && (
+                        <div className="flex justify-center pt-8">
+                          <Pagination>
+                            <PaginationContent>
+                              <PaginationItem>
+                                <PaginationPrevious
+                                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                  className={`cursor-pointer bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
+                                    }`}
                                 // aria-disabled={currentPage === 1}
-                              />
-                            </PaginationItem>
+                                />
+                              </PaginationItem>
 
-                            {getPageNumbers().map((pageNum, index) => (
-                              <PaginationItem key={index}>
-                                {pageNum === 'ellipsis' ? (
-                                  <PaginationEllipsis className="text-white/60" />
-                                ) : (
-                                  <PaginationLink
-                                    onClick={() => setCurrentPage(pageNum)}
-                                    isActive={currentPage === pageNum}
-                                    className={`cursor-pointer border-white/20 transition-all duration-300 ${currentPage === pageNum
+                              {getPageNumbers().map((pageNum, index) => (
+                                <PaginationItem key={index}>
+                                  {pageNum === 'ellipsis' ? (
+                                    <PaginationEllipsis className="text-white/60" />
+                                  ) : (
+                                    <PaginationLink
+                                      onClick={() => setCurrentPage(pageNum)}
+                                      isActive={currentPage === pageNum}
+                                      className={`cursor-pointer border-white/20 transition-all duration-300 ${currentPage === pageNum
                                         ? 'bg-white/20 text-white border-white/40'
                                         : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white hover:border-white/40'
-                                      }`}
-                                  >
-                                    {pageNum}
-                                  </PaginationLink>
-                                )}
-                              </PaginationItem>
-                            ))}
+                                        }`}
+                                    >
+                                      {pageNum}
+                                    </PaginationLink>
+                                  )}
+                                </PaginationItem>
+                              ))}
 
-                            <PaginationItem>
-                              <PaginationNext
-                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                className={`cursor-pointer bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''
-                                  }`}
+                              <PaginationItem>
+                                <PaginationNext
+                                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                  className={`cursor-pointer bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''
+                                    }`}
                                 // aria-disabled={currentPage === totalPages}
-                              />
-                            </PaginationItem>
-                          </PaginationContent>
-                        </Pagination>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <Card className="border border-white/10 bg-white/5 backdrop-blur-sm">
-                    <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-                      <div className="relative mb-8">
-                        <Link2 className="h-20 w-20 text-white/30" />
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-2xl animate-pulse" />
-                      </div>
-
-                      <h3 className="text-2xl font-semibold text-white mb-4">
-                        {searchQuery ? 'No links found' : 'No links yet'}
-                      </h3>
-
-                      <p className="text-white/70 mb-8 max-w-md leading-relaxed">
-                        {searchQuery
-                          ? `No links match "${searchQuery}". Try adjusting your search terms or create a new link.`
-                          : 'Create your first shortened URL and start tracking your analytics. It only takes a few seconds!'
-                        }
-                      </p>
-
-                      {!searchQuery && (
-                        <div className="animate-bounce">
-                          <CreateLink />
+                                />
+                              </PaginationItem>
+                            </PaginationContent>
+                          </Pagination>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
+                    </>
+                  ) : (
+                    <Card className="border border-white/10 bg-white/5 backdrop-blur-sm">
+                      <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+                        <div className="relative mb-8">
+                          <Link2 className="h-20 w-20 text-white/30" />
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-2xl animate-pulse" />
+                        </div>
+
+                        <h3 className="text-2xl font-semibold text-white mb-4">
+                          {searchQuery ? 'No links found' : 'No links yet'}
+                        </h3>
+
+                        <p className="text-white/70 mb-8 max-w-md leading-relaxed">
+                          {searchQuery
+                            ? `No links match "${searchQuery}". Try adjusting your search terms or create a new link.`
+                            : 'Create your first shortened URL and start tracking your analytics. It only takes a few seconds!'
+                          }
+                        </p>
+
+                        {!searchQuery && (
+                          <div className="animate-bounce">
+                            <CreateLink />
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-none bg-transparent backdrop-blur-2xl w-2xl">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Smartphone className="w-5 h-5" />
+                  Top Links This Week
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {topLinks.length === 0 ? (
+                  <div className="text-center text-white/60 py-8">
+                    No link activity this week.
+                  </div>
+                ) : (
+                  <ul className="space-y-4">
+                    {topLinks.map((url, idx) => (
+                      <li key={url.id} className="flex items-center justify-between bg-white/5 border border-white/20 rounded-xl px-4 py-3">
+                        <div className="flex flex-col">
+                          <a
+                            href={url.short_url || `https://zhourt.gt.tc/${url.short_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1"
+                          >
+                            {url.title || url.short_url}
+                            <ExternalLink className="w-4 h-4 ml-1" />
+                          </a>
+                          <span className="text-xs text-white/70 truncate max-w-xs">{url.original_url}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30 px-2 py-1">
+                            {url.clicks} clicks
+                          </Badge>
+                          <span className="text-xs text-white/50">#{idx + 1}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </section>
+
+        <AlertContainer
+          alerts={alerts}
+          onRemoveAlert={removeAlert}
+          position="top-right"
+        />
       </div>
     </div>
   );

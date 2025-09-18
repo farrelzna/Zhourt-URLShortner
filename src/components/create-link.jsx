@@ -1,4 +1,4 @@
-import {Button} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,20 +7,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {Input} from "@/components/ui/input";
-import {Card} from "./ui/card";
-import {useNavigate, useSearchParams} from "react-router-dom";
-import {useEffect, useRef, useState} from "react";
+import { Input } from "@/components/ui/input";
+import { Card } from "./ui/card";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import Error from "./error";
 import * as yup from "yup";
 import useFetch from "@/hooks/use-fetch";
-import {BeatLoader} from "react-spinners";
-import {UrlState} from "@/context";
-import {QRCode} from "react-qrcode-logo";
+import { BeatLoader } from "react-spinners";
+import { UrlState } from "@/context";
+import { QRCode } from "react-qrcode-logo";
 import { createUrls } from "@/db/apiUrls";
 
 export function CreateLink() {
-  const {user} = UrlState();
+  const { user } = UrlState();
 
   const navigate = useNavigate();
   const ref = useRef();
@@ -56,7 +56,7 @@ export function CreateLink() {
     error,
     data,
     fn: fnCreateUrl,
-  } = useFetch(createUrls, {...formValues, user_id: user.id});
+  } = useFetch(createUrls, { ...formValues, user_id: user.id });
 
   useEffect(() => {
     if (error === null && data) {
@@ -68,7 +68,7 @@ export function CreateLink() {
   const createNewLink = async () => {
     setErrors([]);
     try {
-      await schema.validate(formValues, {abortEarly: false});
+      await schema.validate(formValues, { abortEarly: false });
 
       const canvas = ref.current.canvasRef.current;
       const blob = await new Promise((resolve) => canvas.toBlob(resolve));
@@ -90,11 +90,10 @@ export function CreateLink() {
       defaultOpen={longLink}
       onOpenChange={(res) => {
         if (!res) setSearchParams({});
-      }} 
-      className="backdrop-blur-2xl"
+      }}
     >
       <DialogTrigger asChild>
-        <Button className="bg-black/90 text-white hover:bg-black/50">Create New Link</Button>
+        <Button className="bg-black/90 text-white hover:bg-black/50 hover:text-white/50">Create New Link</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md border-none">
         <DialogHeader>
@@ -104,22 +103,28 @@ export function CreateLink() {
           <QRCode ref={ref} size={250} value={formValues?.longUrl} />
         )}
 
-        <Input
-          id="title"
-          placeholder="Short Link's Title"
-          value={formValues.title}
-          onChange={handleChange}                     
+        <div className="mb-2 flex flex-col gap-1"> 
+          <label htmlFor="title">Title</label>
+          <Input
+            id="title"
+            placeholder="Short Link's Title"
+            value={formValues.title}
+            onChange={handleChange}
           />
           {errors.title && <Error message={errors.title} />}
-        <Input
-          id="longUrl"
-          placeholder="Enter your Loooong URL"
-          value={formValues.longUrl}
-          onChange={handleChange}
+        </div>
+        <div className="mb-2 flex flex-col gap-1">
+          <label htmlFor="longUrl">Long URL</label>
+          <Input
+            id="longUrl"
+            placeholder="Enter your Loooong URL"
+            value={formValues.longUrl}
+            onChange={handleChange}
         />
+        </div>
         {errors.longUrl && <Error message={errors.longUrl} />}
         <div className="flex items-center gap-2">
-          <Card className="p-2">trimrr.in</Card> /
+          <Card className="p-2 rounded-sm">zhourt.gt.tc</Card> /
           <Input
             id="customUrl"
             placeholder="Custom Link (optional)"
@@ -130,7 +135,7 @@ export function CreateLink() {
         {error && <Error message={errors.message} />}
         <DialogFooter className="sm:justify-start">
           <Button
-            type="button"            
+            type="button"
             onClick={createNewLink}
             disabled={loading}
             className="bg-white border border-white text-black/90 hover:bg-black/59 hover:text-white hover:border-white/20"
