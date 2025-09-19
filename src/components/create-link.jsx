@@ -18,6 +18,7 @@ import { BeatLoader } from "react-spinners";
 import { UrlState } from "@/context";
 import { QRCode } from "react-qrcode-logo";
 import { createUrls } from "@/db/apiUrls";
+import { Plus } from "lucide-react";
 
 export function CreateLink() {
   const { user } = UrlState();
@@ -93,7 +94,10 @@ export function CreateLink() {
       }}
     >
       <DialogTrigger asChild>
-        <Button className="bg-black/90 text-white hover:bg-black/50 hover:text-white/50">Create New Link</Button>
+        <Button className="bg-transparent shadow-none text-white hover:bg-transparent hover:text-white/50 items-center transition-all">
+          <Plus className="items-center" />
+          Create New Link
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md border-none">
         <DialogHeader>
@@ -103,7 +107,7 @@ export function CreateLink() {
           <QRCode ref={ref} size={250} value={formValues?.longUrl} />
         )}
 
-        <div className="mb-2 flex flex-col gap-1"> 
+        <div className="mb-2 flex flex-col gap-1">
           <label htmlFor="title">Title</label>
           <Input
             id="title"
@@ -120,7 +124,7 @@ export function CreateLink() {
             placeholder="Enter your Loooong URL"
             value={formValues.longUrl}
             onChange={handleChange}
-        />
+          />
         </div>
         {errors.longUrl && <Error message={errors.longUrl} />}
         <div className="flex items-center gap-2">

@@ -307,17 +307,17 @@ const LandingPage = () => {
     "Connect": [
       { name: "Forums", href: "#" },
       { name: "Codepen", href: "#" },
-      { name: "LinkedIn", href: "#" },
+      { name: "LinkedIn", href: "https://www.linkedin.com/in/farrelzna" },
       { name: "Bluesky", href: "#" },
-      { name: "GitHub", href: "#" },
+      { name: "GitHub", href: "https://github.com/farrelzna/Zhourt-URLShortner" },
       { name: "X", href: "#" }
     ]
   };
 
   const socialLinks = [
-    { icon: Github, href: "https://github.com", label: "GitHub" },
+    { icon: Github, href: "https://github.com/farrelzna", label: "GitHub" },
     { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
-    { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
+    { icon: Linkedin, href: "https://www.linkedin.com/in/farrelzna", label: "LinkedIn" },
     { icon: MessageSquare, href: "#", label: "Forums" }
   ];
 
@@ -648,6 +648,8 @@ const LandingPage = () => {
                         href={social.href}
                         aria-label={social.label}
                         className="w-10 h-10 bg-black/80 hover:bg-black/50 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        target="_blank"
+                        rel="noopener noreferrer"
                       >
                         <social.icon className="w-5 h-5 text-white" />
                       </a>

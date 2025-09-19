@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { BarLoader } from "react-spinners";
+import { PropagateLoader } from "react-spinners";
 import { Link2, TrendingUp, Search, BarChart3, Star, Smartphone, ExternalLink } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +26,6 @@ import {
 import LinkCard from "@/components/link-card";
 import Error from "@/components/error";
 import Aurora from '@/components/Aurora';
-import { AlertContainer } from '@/components/AlertNotification';
 
 import useFetch from "@/hooks/use-fetch";
 
@@ -41,7 +40,6 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5); // Configurable items per page
-  const [alerts, setAlerts] = useState([]);
 
   const { user } = UrlState();
   const { loading, error, data: urls, fn: fnUrls } = useFetch(getUrls, user?.id);
@@ -209,9 +207,7 @@ const Dashboard = () => {
       .slice(0, 5);
   };
 
-  const topLinks = getTopLinksThisWeek();
-
-  const removeAlert = (id) => setAlerts((prev) => prev.filter(a => a.id !== id));
+  const topLinks = getTopLinksThisWeek(); 
 
   return (
     <div className="relative min-h-screen">
@@ -229,8 +225,8 @@ const Dashboard = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Loading Bar - Fixed positioning */}
         {isLoading && (
-          <div className="fixed top-0 left-0 right-0 z-50 mb-6">
-            <BarLoader width="100%" color="#ffffff" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-2xl">
+            <PropagateLoader width="100%" color="#fff" />
           </div>
         )}
 
@@ -331,7 +327,7 @@ const Dashboard = () => {
                       placeholder="Search your links..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-12 h-12 bg-white/5 border border-white/30 text-white placeholder:text-white/50 focus:bg-white/10 focus:border-white/50 backdrop-blur-sm rounded-xl transition-all duration-300"
+                      className="pl-12 h-12 bg-white/5 border border-white/30 text-white placeholder:text-white/50 focus:bg-white/10 focus:border-white/50 backdrop-blur-sm rounded-lg transition-all duration-300"
                     />
                   </div>
                   <div className="flex-shrink-0">
@@ -484,7 +480,7 @@ const Dashboard = () => {
                             {url.title || url.short_url}
                             <ExternalLink className="w-4 h-4 ml-1" />
                           </a>
-                          <span className="text-xs text-white/70 truncate max-w-xs">{url.original_url}</span>
+                          <span className="text-xs text-white/70 truncate max-w-50">{url.original_url}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge className="bg-green-500/20 text-green-400 border-green-500/30 px-2 py-1">
@@ -500,12 +496,6 @@ const Dashboard = () => {
             </Card>
           </div>
         </section>
-
-        <AlertContainer
-          alerts={alerts}
-          onRemoveAlert={removeAlert}
-          position="top-right"
-        />
       </div>
     </div>
   );

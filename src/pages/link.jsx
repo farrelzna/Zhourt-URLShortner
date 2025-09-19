@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { BarLoader, BeatLoader } from "react-spinners";
+import { BeatLoader, PropagateLoader } from "react-spinners";
 import { LinkIcon, Copy, Download, Trash, ExternalLink, Calendar, BarChart3, MapPin, Smartphone, Star, ArrowLeft } from "lucide-react";
 import { gsap } from 'gsap';
 
@@ -40,6 +40,7 @@ const Link = () => {
   const mainCardRef = useRef(null);
   const statsRef = useRef(null);
   const qrRef = useRef(null);
+  const deviceRef = useRef(null);
 
   // Alert Manager
   const { alerts, showAlert, removeAlert } = useAlertManager();
@@ -91,6 +92,14 @@ const Link = () => {
         { y: 0, opacity: 1, duration: 0.8, stagger: 0.2, ease: "power3.out" },
         "-=0.4"
       );
+
+      if (deviceRef.current) {
+        tl.fromTo(deviceRef.current,
+          { y: 30, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.8, stagger: 0.2, ease: "power3.out" },
+          "-=0.4"
+        );
+      }
     }
 
     return () => tl.kill();
@@ -169,8 +178,8 @@ const Link = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Loading Bar */}
         {isLoading && (
-          <div className="fixed top-0 left-0 right-0 z-50">
-            <BarLoader width="100%" color="#ffffff" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-2xl">
+            <PropagateLoader width="100%" color="#fff" />
           </div>
         )}
 
@@ -438,7 +447,7 @@ const Link = () => {
               </CardContent>
             </Card>
 
-            <Card className="border border-none bg-transparent backdrop-blur-xl">
+            <Card ref={deviceRef} className="border border-none bg-transparent backdrop-blur-xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
                   <Smartphone className="w-5 h-5" />

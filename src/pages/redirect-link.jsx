@@ -3,7 +3,7 @@ import { getLongUrl } from "@/db/apiUrls";
 import useFetch from "@/hooks/use-fetch";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { BarLoader } from "react-spinners";
+import { PropagateLoader } from "react-spinners";
 
 const RedirectLink = () => {
   const { id } = useParams();
@@ -28,7 +28,9 @@ const RedirectLink = () => {
   if (loading || loadingStats) {
     return (
       <>
-        <BarLoader width={"100%"} color="#000" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-2xl">
+          <PropagateLoader width="100%" color="#fff" />
+        </div>>
         <br />
         Redirecting...
       </>
